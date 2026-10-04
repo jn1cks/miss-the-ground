@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070910">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Miss the Ground</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='5.5' fill='%233e5364'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23ffc56a' stroke-width='1.6'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #070910;
+    --ink: #e8eef8;
+    --muted: #9aa6bb;
+    --faint: #6d7b90;
+    --line: rgba(186, 210, 255, 0.16);
+    --panel: #101624;
+    --panel-2: #161d2e;
+    --amber: #ffc56a;
+    --amber-2: #ffe1ad;
+    --cyan: #8ad7ff;
+    --good: #7ddeb0;
+    --bad: #ff8b78;
+    --violet: #cbb8ff;
+    --paper: #f3ecdf;
+    --paper-ink: #1c160f;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #app {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+    padding:
+      calc(12px + var(--safe-t))
+      calc(14px + var(--safe-r))
+      calc(12px + var(--safe-b))
+      calc(14px + var(--safe-l));
+    background: var(--bg);
+  }
+
+  header {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(190px, 250px) minmax(0, 1fr);
+    gap: 12px;
+    align-items: stretch;
+    min-width: 0;
+  }
+
+  .title-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: 2px 4px;
+  }
+
+  .eyebrow {
+    margin: 0 0 2px;
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.45rem, 2vw, 1.9rem);
+    font-weight: 680;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  #subline {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  .readouts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    min-width: 0;
+  }
+
+  .stat {
+    padding: 10px 14px 12px;
+    min-width: 0;
+  }
+
+  .stat + .stat { border-left: 1px solid var(--line); }
+
+  .stat-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  .stat-flag {
+    letter-spacing: 0.04em;
+    text-transform: none;
+    font-family: var(--mono);
+    color: var(--faint);
+    font-size: 0.72rem;
+  }
+
+  .stat-value {
+    display: block;
+    margin-top: 4px;
+    font-family: var(--mono);
+    font-size: clamp(1.85rem, 4vw, 3.35rem);
+    font-weight: 560;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-unit {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+  }
+
+  .stat.in-ring { box-shadow: inset 0 3px 0 var(--amber); }
+  .stat.is-good { box-shadow: inset 0 3px 0 var(--good); }
+  .stat.is-bad { box-shadow: inset 0 3px 0 var(--bad); }
+  .stat.is-warn { box-shadow: inset 0 3px 0 var(--amber); }
+  .stat.is-escape { box-shadow: inset 0 3px 0 var(--violet); }
+
+  #stage {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #05070c;
+    touch-action: none;
+  }
+
+  #sky {
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+  }
+
+  #coach {
+    position: absolute;
+    left: 78px;
+    right: 14px;
+    bottom: 12px;
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(8, 12, 20, 0.88);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-size: 1.02rem;
+    line-height: 1.35;
+    pointer-events: none;
+  }
+
+  #coach.good { border-color: rgba(125, 222, 176, 0.55); }
+  #coach.bad { border-color: rgba(255, 139, 120, 0.6); }
+  #coach.warn { border-color: rgba(255, 197, 106, 0.55); }
+  #coach.escape { border-color: rgba(203, 184, 255, 0.55); }
+
+  #aim-chip {
+    position: absolute;
+    z-index: 3;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--paper-ink);
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 650;
+    pointer-events: none;
+    transform: translate(-20%, -130%);
+  }
+
+  #meter {
+    position: absolute;
+    z-index: 2;
+    left: 10px;
+    top: 12px;
+    bottom: 72px;
+    width: 58px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+  }
+
+  .meter-end {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+  }
+
+  .meter-track {
+    position: relative;
+    flex: 1;
+    width: 12px;
+    border-radius: 99px;
+    background: rgba(232, 238, 248, 0.12);
+    border: 1px solid rgba(232, 238, 248, 0.16);
+  }
+
+  #meter-window {
+    position: absolute;
+    left: -5px;
+    width: 20px;
+    border-radius: 7px;
+    background: rgba(125, 222, 176, 0.38);
+    border: 1px solid rgba(125, 222, 176, 0.7);
+  }
+
+  #meter-escape {
+    position: absolute;
+    left: -7px;
+    width: 24px;
+    height: 2px;
+    background: var(--violet);
+  }
+
+  #meter-mark {
+    position: absolute;
+    left: -8px;
+    width: 26px;
+    height: 4px;
+    margin-bottom: -2px;
+    border-radius: 2px;
+    background: #fff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  }
+
+  aside {
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 2px;
+  }
+
+  .play-panel {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 8px;
+    background: linear-gradient(var(--bg) 80%, rgba(7, 9, 16, 0));
+  }
+
+  #targets {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .target {
+    min-height: 64px;
+    padding: 8px 10px;
+    text-align: left;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+  }
+
+  .target[aria-pressed="true"] {
+    border-color: rgba(255, 197, 106, 0.9);
+    background: #2a2418;
+  }
+
+  .target:disabled { opacity: 0.45; }
+
+  .t-name {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 720;
+    letter-spacing: 0.04em;
+  }
+
+  .t-alt {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  #ring-facts {
+    margin: 0;
+    color: var(--amber-2);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  #actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .btn {
+    flex: 1 1 140px;
+    min-height: 56px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--ink);
+    font-size: 1.02rem;
+    font-weight: 680;
+    letter-spacing: -0.01em;
+    touch-action: manipulation;
+  }
+
+  .btn.primary {
+    background: var(--paper);
+    color: var(--paper-ink);
+    border-color: transparent;
+  }
+
+  .btn:disabled { opacity: 0.4; }
+
+  .btn:focus-visible,
+  .target:focus-visible,
+  .rate:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+  }
+
+  .rates {
+    display: flex;
+    gap: 8px;
+  }
+
+  .rate, #btn-sound {
+    flex: 1;
+    min-height: 48px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 650;
+    touch-action: manipulation;
+  }
+
+  .rate[aria-pressed="true"] {
+    background: #243044;
+    border-color: rgba(138, 215, 255, 0.7);
+    color: var(--cyan);
+  }
+
+  #rate-note, #save-note, .board-note, .storage-note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.86rem;
+    line-height: 1.35;
+  }
+
+  #save-note:empty { display: none; }
+
+  .lesson, .board {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  .lesson h2, .board h2 {
+    margin: 0 0 6px;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .lesson p, #lesson-more p {
+    margin: 0 0 10px;
+    font-size: 1.05rem;
+    line-height: 1.45;
+    color: #d5deec;
+  }
+
+  .lesson strong, #lesson-more strong {
+    font-family: var(--mono);
+    font-weight: 650;
+    color: var(--amber-2);
+  }
+
+  details {
+    border-top: 1px solid var(--line);
+    margin-top: 4px;
+  }
+
+  summary {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 720;
+    font-size: 1.02rem;
+  }
+
+  #lesson-more { padding-bottom: 8px; }
+
+  .board-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  #btn-clear {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.95rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    touch-action: manipulation;
+  }
+
+  #board-list {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+  }
+
+  #board-list li {
+    display: grid;
+    grid-template-columns: 1.4rem 1fr;
+    gap: 6px;
+    padding: 9px 0;
+    border-top: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+  }
+
+  #board-list .rank {
+    color: var(--faint);
+    font-family: var(--mono);
+  }
+
+  #board-list .main {
+    font-family: var(--mono);
+    font-size: 0.95rem;
+  }
+
+  #board-list .sub {
+    color: var(--muted);
+    font-size: 0.86rem;
+    margin-top: 2px;
+  }
+
+  #board-list li.is-latest .main { color: var(--amber-2); }
+
+  #latest-extra {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 980px) {
+    #app {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto minmax(300px, 1fr) minmax(168px, 36dvh);
+    }
+
+    header { grid-template-columns: 1fr; gap: 8px; }
+
+    .title-block { padding: 0; }
+
+    h1 { font-size: 1.35rem; }
+
+    #subline { margin-top: 4px; }
+
+    #coach { left: 74px; font-size: 0.98rem; }
+
+    .play-panel { position: static; background: transparent; }
+  }
+
+  @media (max-height: 760px) and (min-width: 981px) {
+    .stat { padding: 8px 12px; }
+    .stat-value { font-size: 2.15rem; }
+    h1 { font-size: 1.4rem; }
+  }
+
+  @media (max-width: 420px) {
+    .stat { padding: 8px; }
+    .stat-value { font-size: 1.55rem; }
+    .stat-flag { display: none; }
+    #meter { width: 46px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="title-block">
+      <p class="eyebrow" id="phase-label">Aim · Mira</p>
+      <h1>Miss the Ground</h1>
+      <p id="subline"></p>
+    </div>
+    <div class="readouts">
+      <div class="stat" id="card-speed">
+        <div class="stat-label"><span>Speed</span><span class="stat-flag" id="speed-flag"></span></div>
+        <span class="stat-value" id="speed-value">0.00</span>
+        <span class="stat-unit">km/s</span>
+      </div>
+      <div class="stat" id="card-alt">
+        <div class="stat-label"><span>Altitude</span><span class="stat-flag" id="alt-flag"></span></div>
+        <span class="stat-value" id="alt-value">0</span>
+        <span class="stat-unit">km</span>
+      </div>
+      <div class="stat" id="card-period">
+        <div class="stat-label"><span>Period</span><span class="stat-flag" id="period-flag"></span></div>
+        <span class="stat-value" id="period-value">—</span>
+        <span class="stat-unit" id="period-unit">min</span>
+      </div>
+    </div>
+  </header>
+
+  <div id="stage">
+    <canvas id="sky"></canvas>
+    <div id="meter" aria-hidden="true">
+      <div class="meter-end" id="meter-top"></div>
+      <div class="meter-track">
+        <div id="meter-window"></div>
+        <div id="meter-escape"></div>
+        <div id="meter-mark"></div>
+      </div>
+      <div class="meter-end">0</div>
+    </div>
+    <div id="aim-chip" hidden>0.00 km/s</div>
+    <p id="coach"></p>
+  </div>
+
+  <aside>
+    <div class="play-panel">
+      <div id="targets" role="group" aria-label="Target ring"></div>
+      <p id="ring-facts"></p>
+      <div id="actions">
+        <button type="button" class="btn" id="btn-drop">Drop straight down</button>
+        <button type="button" class="btn" id="btn-pause" hidden>Pause</button>
+        <button type="button" class="btn" id="btn-end" hidden>End run</button>
+        <button type="button" class="btn" id="btn-again" hidden>Throw again</button>
+        <button type="button" class="btn primary" id="btn-save" hidden>Save on this iPad</button>
+      </div>
+      <div class="rates" role="group" aria-label="Clock rate">
+        <button type="button" class="rate" data-rate="90">90×</button>
+        <button type="button" class="rate" data-rate="240">240×</button>
+        <button type="button" class="rate" data-rate="480">480×</button>
+        <button type="button" id="btn-sound" aria-pressed="true">Sound</button>
+      </div>
+      <p id="rate-note">The clock is sped up. The km/s are not.</p>
+      <p id="save-note" role="status"></p>
+    </div>
+
+    <section class="lesson">
+      <h2>The idea</h2>
+      <p id="lesson-lead"></p>
+      <p id="lesson-rail"></p>
+      <details>
+        <summary>The numbers</summary>
+        <div id="lesson-more"></div>
+      </details>
+    </section>
+
+    <section class="board">
+      <div class="board-head">
+        <h2>On this iPad</h2>
+        <button type="button" id="btn-clear">Clear</button>
+      </div>
+      <p class="board-note" id="board-note"></p>
+      <p id="latest-extra" hidden></p>
+      <ol id="board-list"></ol>
+      <p class="storage-note" id="storage-note" hidden></p>
+    </section>
+  </aside>
+</div>
+<noscript><p style="padding:16px">This game needs JavaScript. Everything is in this file — nothing is loaded from the network.</p></noscript>
+
+<script>
+"use strict";
+
+/*
+ * Miss the Ground
+ * 2D point gravity around Mira. Acceleration is GM / r^2 toward the center.
+ * The craft's mass cancels, so only position and velocity matter.
+ * No atmosphere, no thrust after release, no third dimension.
+ *
+ * Mira
+ *   radius R = 1,000 km
+ *   GM       = 4.00 × 10^12 m^3/s^2
+ *   mass     = GM / 6.6743×10^-11 ≈ 5.99×10^22 kg
+ *   surface g = GM / R^2 = 4.0 m/s^2
+ *
+ * Station rail is at r = 2,000 km, so g = 1.00 m/s^2 and escape = 2.00 km/s.
+ */
+
+var G = 6.6743e-11;
+var MU = 4.0e12;
+var PLANET_R = 1000e3;
+var PLANET_MASS = MU / G;
+var SURFACE_G = MU / (PLANET_R * PLANET_R);
+var SIM_DT = 1;
+var PREVIEW_DT = 2;
+var STORE_KEY = "miss-the-ground-v1";
+var RATES = [90, 240, 480];
+
+var TARGET_SPECS = [
+  { id: "wide", name: "Wide", alt: 600e3, band: 480e3 },
+  { id: "station", name: "Station", alt: 1000e3, band: 340e3 },
+  { id: "tight", name: "Tight", alt: 1600e3, band: 180e3 }
+];
+
+var OUTCOME_LABEL = {
+  held: "held the ring",
+  wandered: "left the ring",
+  ground: "hit the ground",
+  escape: "escaped",
+  ended: "stopped early"
+};
+
+var storageOk = true;
+var stars = [];
+var craters = [];
+(function seedArt() {
+  var rnd = mulberry32(11);
+  var i;
+  for (i = 0; i < 150; i++) {
+    stars.push({
+      x: rnd(),
+      y: rnd(),
+      r: rnd() < 0.88 ? 0.7 : 1.35,
+      a: 0.18 + rnd() * 0.62
+    });
+  }
+  for (i = 0; i < 7; i++) {
+    var ang = rnd() * Math.PI * 2;
+    var rad = Math.sqrt(rnd()) * 0.78;
+    craters.push({
+      x: Math.cos(ang) * rad,
+      y: Math.sin(ang) * rad,
+      r: 0.05 + rnd() * 0.09
+    });
+  }
+})();
+
+var targets = {};
+TARGET_SPECS.forEach(function (spec) {
+  targets[spec.id] = deriveTarget(spec);
+});
+
+var store = loadStore();
+var canvas = document.getElementById("sky");
+var ctx = canvas.getContext("2d");
+var stageEl = document.getElementById("stage");
+var clearArmed = false;
+var clearTimer = 0;
+
+var state = {
+  mode: "aim",
+  target: targets[store.targetId] || targets.station,
+  rate: store.rate,
+  sound: store.sound,
+  paused: false,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  simTime: 0,
+  inRing: 0,
+  minAlt: 0,
+  maxAlt: 0,
+  wind: 0,
+  prevAngle: 0,
+  sinceTrail: 0,
+  trail: [],
+  far: 0,
+  dragging: false,
+  pointerId: null,
+  dragX: 0,
+  dragY: 0,
+  aim: null,
+  preview: null,
+  result: null,
+  saved: false,
+  coachKind: "",
+  lastCoach: ""
+};
+
+var audioCtx = null;
+var view = { w: 1, h: 1, dpr: 1, cx: 0, cy: 0, px: 1, maxDrag: 220 };
+
+function mulberry32(a) {
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function deriveTarget(spec) {
+  var r = PLANET_R + spec.alt;
+  var vCirc = Math.sqrt(MU / r);
+  var vEsc = Math.sqrt(2 * MU / r);
+  var period = 2 * Math.PI * Math.sqrt(r * r * r / MU);
+  var rInner = PLANET_R + spec.alt - spec.band;
+  var rOuter = PLANET_R + spec.alt + spec.band;
+  var vLo = speedForPeri(r, rInner);
+  var vHi = speedForApo(r, rOuter);
+  return {
+    id: spec.id,
+    name: spec.name,
+    alt: spec.alt,
+    band: spec.band,
+    r: r,
+    vCirc: vCirc,
+    vEsc: vEsc,
+    period: period,
+    rInner: rInner,
+    rOuter: rOuter,
+    vLo: vLo,
+    vHi: vHi,
+    vMax: vEsc * 1.12,
+    g: MU / (r * r)
+  };
+}
+
+function horizontalElements(r0, v) {
+  var energy = v * v / 2 - MU / r0;
+  var h = r0 * v;
+  if (energy >= -1e-4) {
+    return { bound: false, peri: 0, apo: Infinity, energy: energy, period: Infinity, e: 1, a: Infinity };
+  }
+  var a = -MU / (2 * energy);
+  var e = Math.sqrt(Math.max(0, 1 + 2 * energy * h * h / (MU * MU)));
+  return {
+    bound: true,
+    peri: a * (1 - e),
+    apo: a * (1 + e),
+    energy: energy,
+    period: 2 * Math.PI * Math.sqrt(a * a * a / MU),
+    e: e,
+    a: a
+  };
+}
+
+function speedForPeri(r0, periTarget) {
+  var lo = 1;
+  var hi = Math.sqrt(MU / r0);
+  var i;
+  for (i = 0; i < 48; i++) {
+    var mid = (lo + hi) / 2;
+    var p = horizontalElements(r0, mid);
+    if (!p.bound || p.peri < periTarget) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+function speedForApo(r0, apoTarget) {
+  var lo = Math.sqrt(MU / r0);
+  var hi = Math.sqrt(2 * MU / r0) * 0.999;
+  var i;
+  for (i = 0; i < 48; i++) {
+    var mid = (lo + hi) / 2;
+    var p = horizontalElements(r0, mid);
+    if (!p.bound || p.apo > apoTarget) hi = mid;
+    else lo = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+function elementsOf(x, y, vx, vy) {
+  var r = Math.hypot(x, y);
+  var v2 = vx * vx + vy * vy;
+  var energy = v2 / 2 - MU / r;
+  var h = x * vy - y * vx;
+  var ex = (vy * h) / MU - x / r;
+  var ey = (-vx * h) / MU - y / r;
+  var e = Math.hypot(ex, ey);
+  if (!(energy < -1e-3)) {
+    return { r: r, energy: energy, h: h, e: e, bound: false, a: Infinity, peri: 0, apo: Infinity, period: Infinity };
+  }
+  var a = -MU / (2 * energy);
+  return {
+    r: r,
+    energy: energy,
+    h: h,
+    e: e,
+    bound: true,
+    a: a,
+    peri: a * (1 - e),
+    apo: a * (1 + e),
+    period: 2 * Math.PI * Math.sqrt(Math.abs(a * a * a / MU))
+  };
+}
+
+function accel(x, y) {
+  var r2 = x * x + y * y;
+  var r = Math.sqrt(r2);
+  var c = -MU / (r2 * r);
+  return [c * x, c * y];
+}
+
+function rk4(s, dt) {
+  var x = s.x;
+  var y = s.y;
+  var vx = s.vx;
+  var vy = s.vy;
+  var a1 = accel(x, y);
+  var k1x = vx;
+  var k1y = vy;
+  var k1vx = a1[0];
+  var k1vy = a1[1];
+  var a2 = accel(x + 0.5 * dt * k1x, y + 0.5 * dt * k1y);
+  var k2x = vx + 0.5 * dt * k1vx;
+  var k2y = vy + 0.5 * dt * k1vy;
+  var k2vx = a2[0];
+  var k2vy = a2[1];
+  var a3 = accel(x + 0.5 * dt * k2x, y + 0.5 * dt * k2y);
+  var k3x = vx + 0.5 * dt * k2vx;
+  var k3y = vy + 0.5 * dt * k2vy;
+  var k3vx = a3[0];
+  var k3vy = a3[1];
+  var a4 = accel(x + dt * k3x, y + dt * k3y);
+  var k4x = vx + dt * k3vx;
+  var k4y = vy + dt * k3vy;
+  var k4vx = a4[0];
+  var k4vy = a4[1];
+  s.x = x + dt * (k1x + 2 * k2x + 2 * k3x + k4x) / 6;
+  s.y = y + dt * (k1y + 2 * k2y + 2 * k3y + k4y) / 6;
+  s.vx = vx + dt * (k1vx + 2 * k2vx + 2 * k3vx + k4vx) / 6;
+  s.vy = vy + dt * (k1vy + 2 * k2vy + 2 * k3vy + k4vy) / 6;
+}
+
+function altitude(x, y) {
+  return Math.hypot(x, y) - PLANET_R;
+}
+
+function inBand(alt, target) {
+  return alt >= target.alt - target.band && alt <= target.alt + target.band;
+}
+
+function speedFromFraction(f, t) {
+  var f0 = 0.16;
+  var f1 = 0.78;
+  if (f <= f0) return (f / f0) * t.vLo;
+  if (f <= f1) return t.vLo + ((f - f0) / (f1 - f0)) * (t.vHi - t.vLo);
+  return t.vHi + ((f - f1) / (1 - f1)) * (t.vMax - t.vHi);
+}
+
+function fractionFromSpeed(v, t) {
+  var f0 = 0.16;
+  var f1 = 0.78;
+  if (v <= t.vLo) return f0 * (v / t.vLo);
+  if (v <= t.vHi) return f0 + (f1 - f0) * ((v - t.vLo) / (t.vHi - t.vLo));
+  var span = t.vMax - t.vHi;
+  return f1 + (1 - f1) * (Math.min(v, t.vMax) - t.vHi) / span;
+}
+
+function emptyRing() {
+  return { best: [], latest: null };
+}
+
+function defaultStore() {
+  return {
+    v: 1,
+    sound: true,
+    rate: 240,
+    targetId: "station",
+    rings: { wide: emptyRing(), station: emptyRing(), tight: emptyRing() }
+  };
+}
+
+function loadStore() {
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return defaultStore();
+    var data = JSON.parse(raw);
+    var base = defaultStore();
+    if (!data || data.v !== 1) return base;
+    base.sound = data.sound !== false;
+    base.rate = RATES.indexOf(data.rate) >= 0 ? data.rate : 240;
+    base.targetId = targets && targets[data.targetId] ? data.targetId : (data.targetId === "wide" || data.targetId === "station" || data.targetId === "tight" ? data.targetId : "station");
+    ["wide", "station", "tight"].forEach(function (id) {
+      var ring = data.rings && data.rings[id];
+      if (!ring) return;
+      base.rings[id].best = Array.isArray(ring.best) ? ring.best.filter(validRun).slice(0, 8) : [];
+      base.rings[id].latest = ring.latest && validRun(ring.latest) ? ring.latest : null;
+      base.rings[id].best.sort(function (a, b) {
+        return rankScore(b, targets[id]) - rankScore(a, targets[id]);
+      });
+    });
+    return base;
+  } catch (err) {
+    storageOk = false;
+    return defaultStore();
+  }
+}
+
+function validRun(run) {
+  return run && typeof run.inRing === "number" && typeof run.outcome === "string";
+}
+
+function saveStore() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(store));
+    storageOk = true;
+    return true;
+  } catch (err) {
+    storageOk = false;
+    return false;
+  }
+}
+
+function rankScore(run, target) {
+  if (run.outcome === "held") {
+    var roundness = 1 - Math.min(1, (run.spreadM || 0) / (2 * target.band));
+    return 2 + roundness;
+  }
+  return Math.min(1.999, (run.inRing || 0) / target.period);
+}
+
+function parkOnRail() {
+  var t = state.target;
+  state.mode = "aim";
+  state.paused = false;
+  state.x = t.r;
+  state.y = 0;
+  state.vx = 0;
+  state.vy = 0;
+  state.simTime = 0;
+  state.inRing = 0;
+  state.minAlt = t.alt;
+  state.maxAlt = t.alt;
+  state.wind = 0;
+  state.prevAngle = 0;
+  state.sinceTrail = 0;
+  state.trail = [];
+  state.far = t.r;
+  state.dragging = false;
+  state.aim = null;
+  state.preview = null;
+  state.result = null;
+  state.saved = false;
+  document.getElementById("save-note").textContent = "";
+}
+
+function beginFlight(vx, vy) {
+  var t = state.target;
+  unlockAudio();
+  state.mode = "flight";
+  state.paused = false;
+  state.x = t.r;
+  state.y = 0;
+  state.vx = vx;
+  state.vy = vy;
+  state.simTime = 0;
+  state.inRing = 0;
+  state.minAlt = t.alt;
+  state.maxAlt = t.alt;
+  state.wind = 0;
+  state.prevAngle = 0;
+  state.sinceTrail = 0;
+  state.trail = [{ x: state.x, y: state.y, hot: true }];
+  state.far = t.r;
+  state.dragging = false;
+  state.aim = null;
+  state.preview = null;
+  state.result = null;
+  state.saved = false;
+  document.getElementById("aim-chip").hidden = true;
+  tone(Math.hypot(vx, vy) < 50 ? 180 : 720, 0.08, "sine", 0.05);
+}
+
+function finish(reason) {
+  if (state.mode === "done") return;
+  var t = state.target;
+  var outcome = reason;
+  if (reason === "loop") {
+    var tol = 2000;
+    var stayed = state.minAlt >= (t.alt - t.band - tol) && state.maxAlt <= (t.alt + t.band + tol);
+    outcome = stayed ? "held" : "wandered";
+  }
+  var el = elementsOf(state.x, state.y, state.vx, state.vy);
+  if (outcome === "ground") {
+    var r = Math.hypot(state.x, state.y) || 1;
+    state.x = state.x / r * PLANET_R;
+    state.y = state.y / r * PLANET_R;
+    state.vx = 0;
+    state.vy = 0;
+  }
+  state.mode = "done";
+  state.paused = false;
+  state.result = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    at: Date.now(),
+    outcome: outcome,
+    inRing: state.inRing,
+    spreadM: Math.max(0, state.maxAlt - state.minAlt),
+    lowM: state.minAlt,
+    highM: state.maxAlt,
+    periodS: el.bound ? el.period : null
+  };
+  if (outcome === "held") chord([523.25, 659.25], 0.18, 0.04);
+  else if (outcome === "ground") tone(120, 0.2, "sine", 0.06);
+  else if (outcome === "escape") tone(640, 0.12, "sine", 0.04);
+  else if (outcome === "wandered") tone(392, 0.12, "triangle", 0.04);
+}
+
+function stepSim(dt) {
+  var t = state.target;
+  var prev = state.prevAngle;
+  rk4(state, dt);
+  if (!isFinite(state.x) || !isFinite(state.vx)) {
+    finish("ended");
+    return;
+  }
+  var alt = altitude(state.x, state.y);
+  var r = alt + PLANET_R;
+  state.simTime += dt;
+  state.minAlt = Math.min(state.minAlt, alt);
+  state.maxAlt = Math.max(state.maxAlt, alt);
+  state.far = Math.max(state.far, r);
+  if (inBand(alt, t)) state.inRing += dt;
+
+  var ang = Math.atan2(state.y, state.x);
+  var d = ang - prev;
+  if (d > Math.PI) d -= 2 * Math.PI;
+  if (d < -Math.PI) d += 2 * Math.PI;
+  state.wind += d;
+  state.prevAngle = ang;
+
+  state.sinceTrail += dt;
+  if (state.sinceTrail >= 3) {
+    state.sinceTrail = 0;
+    state.trail.push({ x: state.x, y: state.y, hot: inBand(alt, t) });
+    if (state.trail.length > 4000) state.trail.splice(0, state.trail.length - 4000);
+  }
+
+  if (r <= PLANET_R) {
+    finish("ground");
+    return;
+  }
+  var el = elementsOf(state.x, state.y, state.vx, state.vy);
+  var radial = (state.x * state.vx + state.y * state.vy) / r;
+  if (!el.bound && r > t.rOuter && radial > 0) {
+    finish("escape");
+    return;
+  }
+  if (el.bound && Math.abs(state.wind) >= Math.PI * 2 && state.simTime > 8) {
+    finish("loop");
+  }
+}
+
+function predict(vx, vy, target) {
+  var s = { x: target.r, y: 0, vx: vx, vy: vy };
+  var minAlt = target.alt;
+  var maxAlt = target.alt;
+  var wind = 0;
+  var prev = 0;
+  var points = [{ x: s.x, y: s.y }];
+  var hit = false;
+  var esc = false;
+  var looped = false;
+  var sim = 0;
+  var el0 = elementsOf(s.x, s.y, s.vx, s.vy);
+  var limit = el0.bound ? Math.min(el0.period * 1.05, 25000) : 8000;
+  var steps = Math.ceil(limit / PREVIEW_DT);
+  var i;
+  for (i = 0; i < steps; i++) {
+    rk4(s, PREVIEW_DT);
+    sim += PREVIEW_DT;
+    var alt = altitude(s.x, s.y);
+    var r = alt + PLANET_R;
+    if (alt < minAlt) minAlt = alt;
+    if (alt > maxAlt) maxAlt = alt;
+    if (i % 4 === 0) points.push({ x: s.x, y: s.y });
+    if (r <= PLANET_R) {
+      hit = true;
+      points.push({ x: s.x, y: s.y });
+      break;
+    }
+    var el = elementsOf(s.x, s.y, s.vx, s.vy);
+    var radial = (s.x * s.vx + s.y * s.vy) / r;
+    if (!el.bound && r > target.rOuter && radial > 0) {
+      esc = true;
+      points.push({ x: s.x, y: s.y });
+      break;
+    }
+    var ang = Math.atan2(s.y, s.x);
+    var d = ang - prev;
+    if (d > Math.PI) d -= 2 * Math.PI;
+    if (d < -Math.PI) d += 2 * Math.PI;
+    wind += d;
+    prev = ang;
+    if (el.bound && Math.abs(wind) >= Math.PI * 2 && sim > 8) {
+      looped = true;
+      points.push({ x: s.x, y: s.y });
+      break;
+    }
+  }
+  var tol = 2000;
+  var stayed = minAlt >= target.alt - target.band - tol && maxAlt <= target.alt + target.band + tol;
+  var kind = "wandered";
+  if (hit) kind = "ground";
+  else if (esc) kind = "escape";
+  else if (looped && stayed) kind = "held";
+  else kind = "wandered";
+  return {
+    points: points,
+    kind: kind,
+    minAlt: minAlt,
+    maxAlt: maxAlt,
+    elements: el0,
+    vx: vx,
+    vy: vy
+  };
+}
+
+function fmtSpeed(mps) {
+  return (mps / 1000).toFixed(2);
+}
+
+function fmtAlt(meters) {
+  var km = Math.round(meters / 1000);
+  var sign = km < 0 ? "−" : "";
+  var body = String(Math.abs(km)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return sign + body;
+}
+
+function fmtMin(seconds) {
+  if (!isFinite(seconds)) return "—";
+  var min = seconds / 60;
+  if (min >= 100) return min.toFixed(0);
+  return min.toFixed(1);
+}
+
+function fmtDuration(seconds) {
+  if (seconds < 90) return Math.round(seconds) + " s";
+  return fmtMin(seconds) + " min";
+}
+
+function sup(exp) {
+  var map = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+  return String(exp).split("").map(function (c) { return map[c] || c; }).join("");
+}
+
+function sci(n) {
+  var exp = Math.floor(Math.log10(n));
+  var man = n / Math.pow(10, exp);
+  return man.toFixed(2) + "×10" + sup(exp);
+}
+
+function earthCompare() {
+  var mu = 3.986004418e14;
+  var r = (6371 + 400) * 1000;
+  return {
+    v: Math.sqrt(mu / r),
+    period: 2 * Math.PI * Math.sqrt(r * r * r / mu)
+  };
+}
+
+function setText(id, text) {
+  var node = document.getElementById(id);
+  if (node.textContent !== text) node.textContent = text;
+}
+
+function renderCopy() {
+  var t = state.target;
+  var earth = earthCompare();
+  document.getElementById("lesson-lead").innerHTML =
+    "An orbit is a fall that misses the ground. At <strong>" + fmtSpeed(t.vCirc) +
+    " km/s</strong> sideways, Mira’s surface curves away as fast as you fall, and you never land. One loop takes <strong>" +
+    fmtMin(t.period) + " min</strong>.";
+  document.getElementById("lesson-rail").innerHTML =
+    "Too slow, you meet the ground. Too fast — past <strong>" + fmtSpeed(t.vEsc) +
+    " km/s</strong> here — you leave and don’t come back. The rail is already up in the ring, because the low point of a throw is about where you let go.";
+  document.getElementById("lesson-more").innerHTML =
+    "<p>Pull right now is <strong>GM / r² = " + t.g.toFixed(2) + " m/s²</strong>. The craft’s mass is on both sides, so it cancels. A wrench and a ship fall the same way. r is distance from the center, not height above the surface.</p>" +
+    "<p>Sideways, this ring holds a throw between <strong>" + fmtSpeed(t.vLo) + "</strong> and <strong>" + fmtSpeed(t.vHi) +
+    " km/s</strong>. The throw meter stretches around that window so your finger can hit it. The speed it shows is still the real one. Escape is <strong>" +
+    fmtSpeed(t.vEsc) + " km/s</strong>.</p>" +
+    "<p>The amber band is <strong>" + fmtAlt(t.alt - t.band) + "–" + fmtAlt(t.alt + t.band) +
+    " km</strong> above the surface, " + fmtAlt(t.band) + " km either side of " + fmtAlt(t.alt) + " km.</p>" +
+    "<p>Mira: radius <strong>1,000 km</strong>, mass <strong>" + sci(PLANET_MASS) +
+    " kg</strong>, GM = <strong>" + sci(MU) + " m³/s²</strong>. Surface gravity is <strong>" +
+    SURFACE_G.toFixed(1) + " m/s²</strong>. Earth is 9.8.</p>" +
+    "<p>No air in this model. The blue edge is a drawing. It does not slow you down.</p>" +
+    "<p>The × buttons speed the clock up so you don’t wait " + fmtMin(t.period) +
+    " real minutes. They don’t change the km/s.</p>" +
+    "<p>Same math, Earth, 400 km up: about <strong>" + (earth.v / 1000).toFixed(2) +
+    " km/s</strong> and <strong>" + Math.round(earth.period / 60) + " min</strong>. Earth is heavier. Mira is small so the whole ring fits on the screen.</p>";
+  setText("ring-facts", "Sideways " + fmtSpeed(t.vLo) + "–" + fmtSpeed(t.vHi) + " km/s holds it · escape " + fmtSpeed(t.vEsc));
+  setText("board-note", "Best throws for " + t.name + ". A full loop inside the ring ranks first. Rounder (smaller spread) ranks higher. Then time in the ring. Stored on this device only.");
+  setText("meter-top", fmtSpeed(t.vMax));
+  var track = document.querySelector(".meter-track");
+  var windowEl = document.getElementById("meter-window");
+  var escapeEl = document.getElementById("meter-escape");
+  windowEl.style.bottom = (t.vLo / t.vMax * 100) + "%";
+  windowEl.style.height = ((t.vHi - t.vLo) / t.vMax * 100) + "%";
+  escapeEl.style.bottom = (t.vEsc / t.vMax * 100) + "%";
+  track.setAttribute("data-ready", "1");
+}
+
+function renderTargets() {
+  var wrap = document.getElementById("targets");
+  wrap.innerHTML = "";
+  TARGET_SPECS.forEach(function (spec) {
+    var t = targets[spec.id];
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "target";
+    btn.setAttribute("aria-pressed", t.id === state.target.id ? "true" : "false");
+    btn.disabled = state.mode === "flight";
+    btn.innerHTML = '<span class="t-name">' + t.name + '</span><span class="t-alt">' +
+      fmtAlt(t.alt) + " km<br>±" + fmtAlt(t.band) + " km</span>";
+    btn.addEventListener("click", function () {
+      if (state.mode === "flight") return;
+      store.targetId = t.id;
+      saveStore();
+      state.target = targets[t.id];
+      parkOnRail();
+      renderTargets();
+      renderCopy();
+      renderBoard();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+function renderBoard() {
+  var t = state.target;
+  var ring = store.rings[t.id];
+  var list = document.getElementById("board-list");
+  var extra = document.getElementById("latest-extra");
+  var note = document.getElementById("storage-note");
+  list.innerHTML = "";
+  if (!storageOk) {
+    note.hidden = false;
+    note.textContent = "This browser isn’t keeping saves. Private mode sometimes blocks on-device storage.";
+  } else {
+    note.hidden = true;
+  }
+  if (!ring.best.length) {
+    var empty = document.createElement("li");
+    empty.innerHTML = '<span class="rank"></span><span><span class="main">Nothing saved for this ring yet.</span><div class="sub">End a run, then save it on this iPad.</div></span>';
+    list.appendChild(empty);
+  }
+  ring.best.forEach(function (run, i) {
+    var li = document.createElement("li");
+    if (ring.latest && run.id === ring.latest.id) li.className = "is-latest";
+    var main = document.createElement("div");
+    main.className = "main";
+    var sub = document.createElement("div");
+    sub.className = "sub";
+    if (run.outcome === "held") {
+      main.textContent = "Spread " + fmtAlt(run.spreadM) + " km";
+      sub.textContent = "held the ring · " + fmtDuration(run.inRing) + " in it";
+    } else {
+      main.textContent = fmtDuration(run.inRing) + " in the ring";
+      sub.textContent = OUTCOME_LABEL[run.outcome] || run.outcome;
+    }
+    var rank = document.createElement("span");
+    rank.className = "rank";
+    rank.textContent = String(i + 1);
+    var body = document.createElement("span");
+    body.appendChild(main);
+    body.appendChild(sub);
+    li.appendChild(rank);
+    li.appendChild(body);
+    list.appendChild(li);
+  });
+  if (ring.latest && !ring.best.some(function (run) { return run.id === ring.latest.id; })) {
+    extra.hidden = false;
+    extra.textContent = "Latest save didn’t make the top 8: " + (OUTCOME_LABEL[ring.latest.outcome] || "") + ", " + fmtDuration(ring.latest.inRing) + " in the ring.";
+  } else {
+    extra.hidden = true;
+  }
+}
+
+function syncButtons() {
+  var aim = state.mode === "aim";
+  var flight = state.mode === "flight";
+  var done = state.mode === "done";
+  document.getElementById("btn-drop").hidden = !aim;
+  document.getElementById("btn-pause").hidden = !flight;
+  document.getElementById("btn-end").hidden = !flight;
+  document.getElementById("btn-again").hidden = !done;
+  document.getElementById("btn-save").hidden = !done;
+  document.getElementById("btn-pause").textContent = state.paused ? "Resume" : "Pause";
+  var saveBtn = document.getElementById("btn-save");
+  saveBtn.disabled = state.saved;
+  saveBtn.textContent = state.saved ? "Saved" : "Save on this iPad";
+  document.querySelectorAll(".rate").forEach(function (btn) {
+    btn.setAttribute("aria-pressed", Number(btn.getAttribute("data-rate")) === state.rate ? "true" : "false");
+  });
+  document.getElementById("btn-sound").setAttribute("aria-pressed", state.sound ? "true" : "false");
+  document.getElementById("btn-sound").textContent = state.sound ? "Sound on" : "Sound off";
+  document.querySelectorAll(".target").forEach(function (btn) {
+    btn.disabled = flight;
+  });
+}
+
+function currentReadout() {
+  var t = state.target;
+  if (state.mode === "aim") {
+    if (state.aim) {
+      var speed = Math.hypot(state.aim.vx, state.aim.vy);
+      var el = state.preview ? state.preview.elements : elementsOf(t.r, 0, state.aim.vx, state.aim.vy);
+      return {
+        speed: speed,
+        speedFlag: "your throw",
+        alt: t.alt,
+        altFlag: "on the rail",
+        el: el,
+        hot: false
+      };
+    }
+    return {
+      speed: 0,
+      speedFlag: "on the rail",
+      alt: t.alt,
+      altFlag: "rail height",
+      el: { bound: true, period: t.period, peri: t.r, apo: t.r },
+      hot: true
+    };
+  }
+  var elNow = elementsOf(state.x, state.y, state.vx, state.vy);
+  var alt = altitude(state.x, state.y);
+  return {
+    speed: Math.hypot(state.vx, state.vy),
+    speedFlag: state.paused ? "paused" : "right now",
+    alt: Math.max(0, alt),
+    altFlag: state.mode === "done" ? "at the end" : (inBand(alt, t) ? "in the ring" : "outside"),
+    el: elNow,
+    hot: inBand(alt, t)
+  };
+}
+
+function syncHud() {
+  var t = state.target;
+  var read = currentReadout();
+  setText("speed-value", fmtSpeed(read.speed));
+  setText("speed-flag", read.speedFlag);
+  setText("alt-value", fmtAlt(read.alt));
+  setText("alt-flag", read.altFlag);
+  var periodCard = document.getElementById("card-period");
+  var speedCard = document.getElementById("card-speed");
+  var altCard = document.getElementById("card-alt");
+  speedCard.className = "stat";
+  altCard.className = "stat";
+  periodCard.className = "stat";
+  if (state.mode === "aim" && state.aim && state.preview) {
+    var k = state.preview.kind;
+    speedCard.classList.add(k === "held" ? "is-good" : k === "ground" ? "is-bad" : k === "escape" ? "is-escape" : "is-warn");
+  }
+  if (read.hot && state.mode !== "aim") altCard.classList.add("in-ring");
+  if (state.mode === "aim" && !state.aim) altCard.classList.add("in-ring");
+
+  if (state.mode === "aim" && !state.aim) {
+    setText("period-value", fmtMin(t.period));
+    setText("period-flag", "round orbit");
+    setText("period-unit", "min");
+  } else if (!read.el.bound) {
+    setText("period-value", "—");
+    setText("period-flag", "escape");
+    setText("period-unit", "not a loop");
+  } else if (read.el.peri < PLANET_R - 1000) {
+    setText("period-value", fmtMin(read.el.period));
+    setText("period-flag", "would be");
+    setText("period-unit", "min · hits ground");
+  } else {
+    setText("period-value", fmtMin(read.el.period));
+    setText("period-flag", "one loop");
+    setText("period-unit", "min");
+  }
+
+  var sub;
+  if (state.mode === "aim" && !state.aim) {
+    sub = "Rail at " + fmtAlt(t.alt) + " km · band " + fmtAlt(t.alt - t.band) + "–" + fmtAlt(t.alt + t.band) + " km";
+  } else if (state.mode === "aim" && state.preview) {
+    sub = "If you let go · low " + (state.preview.minAlt <= 0 ? "ground" : fmtAlt(state.preview.minAlt) + " km") +
+      " · high " + (isFinite(state.preview.maxAlt) ? fmtAlt(state.preview.maxAlt) + " km" : "—");
+  } else {
+    sub = "In ring " + fmtDuration(state.inRing) + " · low " +
+      (state.minAlt <= 0 ? "ground" : fmtAlt(state.minAlt) + " km") +
+      " · high " + fmtAlt(state.maxAlt) + " km";
+  }
+  setText("subline", sub);
+
+  var mark = document.getElementById("meter-mark");
+  var shown = Math.min(read.speed, t.vMax);
+  mark.style.bottom = (shown / t.vMax * 100) + "%";
+
+  var coach = coachText();
+  var coachEl = document.getElementById("coach");
+  if (coach.text !== state.lastCoach) {
+    coachEl.textContent = coach.text;
+    state.lastCoach = coach.text;
+  }
+  if (coach.kind !== state.coachKind) {
+    coachEl.className = coach.kind || "";
+    state.coachKind = coach.kind;
+  }
+  document.getElementById("phase-label").textContent = phaseLabel() + " · Mira";
+  syncButtons();
+}
+
+function phaseLabel() {
+  if (state.mode === "aim") return "Aim";
+  if (state.mode === "flight" && state.paused) return "Paused";
+  if (state.mode === "flight") return "Flying";
+  return "Result";
+}
+
+function coachText() {
+  var t = state.target;
+  if (state.mode === "aim" && !state.aim) {
+    return { kind: "", text: "Drag sideways to throw. Match the pale arrow, then let go. Or drop straight down and watch a fall." };
+  }
+  if (state.mode === "aim" && state.preview) {
+    var p = state.preview;
+    var low = p.minAlt <= 0 ? "the ground" : fmtAlt(p.minAlt) + " km";
+    var high = fmtAlt(p.maxAlt) + " km";
+    if (p.kind === "ground") return { kind: "bad", text: "Too slow. Low point is " + low + ". The path meets Mira." };
+    if (p.kind === "escape") return { kind: "escape", text: "Too fast. Escape here is " + fmtSpeed(t.vEsc) + " km/s. This one doesn’t come back." };
+    if (p.kind === "held") return { kind: "good", text: "Low " + low + ", high " + high + ". This throw holds the ring. Let go." };
+    return { kind: "warn", text: "Low " + low + ", high " + high + ". It orbits, but it leaves the ring." };
+  }
+  if (state.mode === "flight") {
+    var alt = altitude(state.x, state.y);
+    if (state.paused) return { kind: "", text: "Paused. The numbers stay put." };
+    if (inBand(alt, t)) return { kind: "good", text: "Inside the ring. Gravity is doing the flying." };
+    return { kind: "warn", text: "Outside the ring. Altitude " + fmtAlt(Math.max(0, alt)) + " km." };
+  }
+  var result = state.result;
+  if (!result) return { kind: "", text: "" };
+  if (result.outcome === "held") {
+    var spreadKm = Math.round(result.spreadM / 1000);
+    var nice = spreadKm <= 8 ? " Almost round." : "";
+    return { kind: "good", text: "You held the ring. Falling, and missing, the whole way around. Spread " + fmtAlt(result.spreadM) + " km." + nice };
+  }
+  if (result.outcome === "wandered") return { kind: "warn", text: "You went around, but you left the ring. " + fmtDuration(result.inRing) + " inside it." };
+  if (result.outcome === "ground") return { kind: "bad", text: "Too slow. The ground got there. " + fmtDuration(result.inRing) + " in the ring before that." };
+  if (result.outcome === "escape") return { kind: "escape", text: "Too fast. You left Mira. " + fmtDuration(result.inRing) + " in the ring on the way out." };
+  return { kind: "", text: "Stopped early. " + fmtDuration(result.inRing) + " in the ring. You can still save it." };
+}
+
+function resize() {
+  var rect = stageEl.getBoundingClientRect();
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  view.w = Math.max(1, rect.width);
+  view.h = Math.max(1, rect.height);
+  view.dpr = dpr;
+  canvas.width = Math.round(view.w * dpr);
+  canvas.height = Math.round(view.h * dpr);
+  view.maxDrag = Math.max(160, Math.min(280, Math.min(view.w, view.h) * 0.46));
+}
+
+function worldToScreen(x, y) {
+  return [view.cx + x * view.px, view.cy - y * view.px];
+}
+
+function layoutCamera() {
+  var t = state.target;
+  var padL = 78;
+  var padR = 18;
+  var padT = 16;
+  var padB = 78;
+  view.cx = (padL + (view.w - padR)) / 2;
+  view.cy = (padT + (view.h - padB)) / 2;
+  var usable = Math.min(view.w - padL - padR, view.h - padT - padB);
+  var viewRadius = t.rOuter * 1.3;
+  view.px = (usable * 0.5) / viewRadius;
+}
+
+function draw() {
+  var t = state.target;
+  var w = view.w;
+  var h = view.h;
+  layoutCamera();
+  ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#05070d";
+  ctx.fillRect(0, 0, w, h);
+
+  var i;
+  for (i = 0; i < stars.length; i++) {
+    var s = stars[i];
+    ctx.fillStyle = "rgba(232, 238, 248, " + s.a + ")";
+    ctx.beginPath();
+    ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  var vig = ctx.createRadialGradient(view.cx, view.cy, Math.min(w, h) * 0.2, view.cx, view.cy, Math.max(w, h) * 0.72);
+  vig.addColorStop(0, "rgba(0,0,0,0)");
+  vig.addColorStop(1, "rgba(0,0,0,0.38)");
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, h);
+
+  drawBand(t);
+  drawPlanet();
+  if (state.mode === "aim") drawRail();
+  drawTrail(state.trail, false);
+  if (state.preview) drawTrail(state.preview.points.map(function (p) { return { x: p.x, y: p.y, hot: state.preview.kind === "held" }; }), true, state.preview.kind);
+  if (state.mode === "aim") {
+    drawThrowArrow(0, t.vCirc, "rgba(255, 214, 160, 0.9)", true, fmtSpeed(t.vCirc) + " km/s");
+    if (state.aim) {
+      var col = state.preview ? colorForKind(state.preview.kind) : "#ffffff";
+      drawThrowArrow(state.aim.vx, state.aim.vy, col, false, "");
+    }
+  }
+  drawCraft();
+  drawOffscreen();
+  drawScale();
+  drawRingLabel();
+}
+
+function colorForKind(kind) {
+  if (kind === "held") return "#7ddeb0";
+  if (kind === "ground") return "#ff8b78";
+  if (kind === "escape") return "#cbb8ff";
+  return "#ffc56a";
+}
+
+function drawBand(t) {
+  var hot = false;
+  if (state.mode === "flight") hot = inBand(altitude(state.x, state.y), t);
+  if (state.mode === "aim" && !state.aim) hot = true;
+  var rIn = (t.rInner) * view.px;
+  var rOut = (t.rOuter) * view.px;
+  var rMid = t.r * view.px;
+  ctx.beginPath();
+  ctx.arc(view.cx, view.cy, rOut, 0, Math.PI * 2);
+  ctx.arc(view.cx, view.cy, rIn, 0, Math.PI * 2, true);
+  ctx.fillStyle = hot ? "rgba(255, 197, 106, 0.16)" : "rgba(255, 197, 106, 0.07)";
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(view.cx, view.cy, rIn, 0, Math.PI * 2);
+  ctx.arc(view.cx, view.cy, rOut, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255, 197, 106, 0.45)";
+  ctx.lineWidth = 1.25;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(view.cx, view.cy, rMid, 0, Math.PI * 2);
+  ctx.setLineDash([5, 7]);
+  ctx.strokeStyle = "rgba(255, 225, 173, 0.7)";
+  ctx.lineWidth = 1.25;
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawPlanet() {
+  var pr = PLANET_R * view.px;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(view.cx, view.cy, pr * 1.22, 0, Math.PI * 2);
+  var glow = ctx.createRadialGradient(view.cx, view.cy, pr * 0.9, view.cx, view.cy, pr * 1.22);
+  glow.addColorStop(0, "rgba(126, 176, 214, 0)");
+  glow.addColorStop(0.55, "rgba(140, 196, 230, 0.28)");
+  glow.addColorStop(1, "rgba(140, 196, 230, 0)");
+  ctx.fillStyle = glow;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(view.cx, view.cy, pr, 0, Math.PI * 2);
+  ctx.clip();
+  var body = ctx.createRadialGradient(view.cx - pr * 0.38, view.cy - pr * 0.42, pr * 0.08, view.cx + pr * 0.15, view.cy + pr * 0.1, pr * 1.05);
+  body.addColorStop(0, "#8ea4b4");
+  body.addColorStop(0.42, "#4d6474");
+  body.addColorStop(1, "#1a242e");
+  ctx.fillStyle = body;
+  ctx.fillRect(view.cx - pr, view.cy - pr, pr * 2, pr * 2);
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = Math.max(2, pr * 0.045);
+  var b;
+  for (b = -2; b <= 2; b++) {
+    ctx.beginPath();
+    ctx.ellipse(view.cx, view.cy + b * pr * 0.23, pr * 1.05, pr * 0.13, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  var c;
+  for (c = 0; c < craters.length; c++) {
+    var crater = craters[c];
+    ctx.beginPath();
+    ctx.arc(view.cx + crater.x * pr, view.cy + crater.y * pr, crater.r * pr, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(8, 12, 16, 0.18)";
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.beginPath();
+  ctx.arc(view.cx, view.cy, pr, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(214, 228, 236, 0.4)";
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(244, 248, 252, 0.72)";
+  ctx.font = "600 12px " + "ui-sans-serif, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("MIRA", view.cx, view.cy + pr * 0.52);
+}
+
+function drawRail() {
+  var t = state.target;
+  var foot = worldToScreen(PLANET_R + 6000, 0);
+  var head = worldToScreen(t.r - 18000, 0);
+  ctx.save();
+  ctx.setLineDash([2, 8]);
+  ctx.strokeStyle = "rgba(186, 198, 210, 0.35)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(foot[0], foot[1]);
+  ctx.lineTo(head[0], head[1]);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawTrail(points, dashed, kind) {
+  if (!points || points.length < 2) return;
+  ctx.save();
+  ctx.lineWidth = dashed ? 2.5 : 3;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  if (dashed) {
+    ctx.setLineDash([6, 7]);
+    ctx.strokeStyle = colorForKind(kind);
+    ctx.globalAlpha = 0.95;
+    ctx.beginPath();
+    var p0 = worldToScreen(points[0].x, points[0].y);
+    ctx.moveTo(p0[0], p0[1]);
+    var i;
+    for (i = 1; i < points.length; i++) {
+      var p = worldToScreen(points[i].x, points[i].y);
+      ctx.lineTo(p[0], p[1]);
+    }
+    ctx.stroke();
+  } else {
+    var j;
+    for (j = 1; j < points.length; j++) {
+      var a = worldToScreen(points[j - 1].x, points[j - 1].y);
+      var b = worldToScreen(points[j].x, points[j].y);
+      ctx.beginPath();
+      ctx.moveTo(a[0], a[1]);
+      ctx.lineTo(b[0], b[1]);
+      ctx.strokeStyle = points[j].hot ? "rgba(138, 215, 255, 0.95)" : "rgba(176, 188, 206, 0.45)";
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawThrowArrow(vx, vy, color, ghost, label) {
+  var speed = Math.hypot(vx, vy);
+  if (speed < 1) return;
+  var t = state.target;
+  var len = fractionFromSpeed(speed, t) * view.maxDrag;
+  var ang = Math.atan2(-vy, vx);
+  var origin = worldToScreen(state.x, state.y);
+  ctx.save();
+  ctx.translate(origin[0], origin[1]);
+  ctx.rotate(ang);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(ghost ? 8 : 12, 0);
+  ctx.lineTo(len - 12, 0);
+  ctx.strokeStyle = "rgba(8, 6, 2, 0.85)";
+  ctx.lineWidth = ghost ? 9 : 6;
+  ctx.stroke();
+  ctx.strokeStyle = ghost ? "#ffd98a" : color;
+  ctx.lineWidth = ghost ? 5 : 3.5;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(len + 4, 0);
+  ctx.lineTo(len - 14, 8);
+  ctx.lineTo(len - 14, -8);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(8, 6, 2, 0.9)";
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(len + 1, 0);
+  ctx.lineTo(len - 12, 6);
+  ctx.lineTo(len - 12, -6);
+  ctx.closePath();
+  ctx.fillStyle = ghost ? "#ffe6b0" : color;
+  ctx.fill();
+  if (label) {
+    ctx.rotate(-ang);
+    var tipx = Math.cos(ang) * (len + 16) + (-Math.sin(ang)) * 10;
+    var tipy = Math.sin(ang) * (len + 16) + Math.cos(ang) * 10;
+    ctx.font = "650 15px ui-monospace, Menlo, monospace";
+    var tw = ctx.measureText(label).width;
+    ctx.fillStyle = "rgba(8, 10, 16, 0.82)";
+    ctx.fillRect(tipx - 6, tipy - 16, tw + 12, 22);
+    ctx.fillStyle = "#ffe7c2";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, tipx, tipy - 4);
+  }
+  ctx.restore();
+}
+
+function drawCraft() {
+  var pos = worldToScreen(state.x, state.y);
+  var ang;
+  if (state.mode === "aim" && state.aim) ang = Math.atan2(-state.aim.vy, state.aim.vx);
+  else if (Math.hypot(state.vx, state.vy) > 20) ang = Math.atan2(-state.vy, state.vx);
+  else ang = -Math.PI / 2;
+  ctx.save();
+  ctx.translate(pos[0], pos[1]);
+  ctx.rotate(ang);
+  ctx.beginPath();
+  ctx.moveTo(13, 0);
+  ctx.lineTo(-9, 6);
+  ctx.lineTo(-5.5, 0);
+  ctx.lineTo(-9, -6);
+  ctx.closePath();
+  ctx.fillStyle = "#f4f7fb";
+  ctx.fill();
+  ctx.lineWidth = 1.25;
+  ctx.strokeStyle = "rgba(0,0,0,0.7)";
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawOffscreen() {
+  if (state.mode === "aim") return;
+  var pos = worldToScreen(state.x, state.y);
+  var m = 22;
+  if (pos[0] > m && pos[0] < view.w - m && pos[1] > m && pos[1] < view.h - m) return;
+  var cx = view.cx;
+  var cy = view.cy;
+  var dx = pos[0] - cx;
+  var dy = pos[1] - cy;
+  var left = 70;
+  var right = view.w - 16;
+  var top = 16;
+  var bottom = view.h - 70;
+  var tx = dx === 0 ? Infinity : ((dx > 0 ? right : left) - cx) / dx;
+  var ty = dy === 0 ? Infinity : ((dy > 0 ? bottom : top) - cy) / dy;
+  var u = Math.min(tx > 0 ? tx : Infinity, ty > 0 ? ty : Infinity);
+  if (!isFinite(u)) return;
+  var x = cx + dx * u;
+  var y = cy + dy * u;
+  var ang = Math.atan2(dy, dx);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(ang);
+  ctx.beginPath();
+  ctx.moveTo(8, 0);
+  ctx.lineTo(-7, 6);
+  ctx.lineTo(-7, -6);
+  ctx.closePath();
+  ctx.fillStyle = "#ffc56a";
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawScale() {
+  var px = view.px;
+  var targetPx = 110;
+  var km = targetPx / px / 1000;
+  var choices = [50, 100, 200, 250, 500, 1000, 2000, 4000];
+  var nice = choices[0];
+  var i;
+  for (i = 0; i < choices.length; i++) {
+    if (Math.abs(choices[i] - km) < Math.abs(nice - km)) nice = choices[i];
+  }
+  var length = nice * 1000 * px;
+  var x = view.w - 18 - length;
+  var y = 22;
+  ctx.strokeStyle = "rgba(232, 238, 248, 0.75)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + length, y);
+  ctx.moveTo(x, y - 4);
+  ctx.lineTo(x, y + 4);
+  ctx.moveTo(x + length, y - 4);
+  ctx.lineTo(x + length, y + 4);
+  ctx.stroke();
+  ctx.fillStyle = "rgba(232, 238, 248, 0.8)";
+  ctx.font = "12px ui-monospace, Menlo, monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(fmtAlt(nice * 1000) + " km", x + length / 2, y - 6);
+}
+
+function drawRingLabel() {
+  var t = state.target;
+  var top = worldToScreen(0, t.r);
+  ctx.fillStyle = "rgba(255, 225, 173, 0.92)";
+  ctx.font = "600 13px ui-monospace, Menlo, monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(fmtAlt(t.alt) + " km", top[0], top[1] - 8);
+}
+
+function onPointerDown(e) {
+  if (state.mode !== "aim") return;
+  if (e.button !== undefined && e.button !== 0) return;
+  unlockAudio();
+  state.dragging = true;
+  state.pointerId = e.pointerId;
+  state.dragX = e.clientX;
+  state.dragY = e.clientY;
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  e.preventDefault();
+}
+
+function onPointerMove(e) {
+  if (!state.dragging || e.pointerId !== state.pointerId) return;
+  var dx = e.clientX - state.dragX;
+  var dy = e.clientY - state.dragY;
+  var dist = Math.hypot(dx, dy);
+  var chip = document.getElementById("aim-chip");
+  if (dist < 12) {
+    state.aim = null;
+    state.preview = null;
+    chip.hidden = true;
+    return;
+  }
+  var f = Math.min(1, dist / view.maxDrag);
+  var speed = speedFromFraction(f, state.target);
+  var vx = dx / dist * speed;
+  var vy = -dy / dist * speed;
+  state.aim = { vx: vx, vy: vy, f: f };
+  state.preview = predict(vx, vy, state.target);
+  var rect = stageEl.getBoundingClientRect();
+  chip.hidden = false;
+  chip.textContent = fmtSpeed(speed) + " km/s";
+  var left = e.clientX - rect.left;
+  var top = e.clientY - rect.top;
+  left = Math.max(8, Math.min(view.w - 90, left));
+  top = Math.max(36, Math.min(view.h - 20, top));
+  chip.style.left = left + "px";
+  chip.style.top = top + "px";
+}
+
+function onPointerUp(e) {
+  if (!state.dragging || e.pointerId !== state.pointerId) return;
+  state.dragging = false;
+  document.getElementById("aim-chip").hidden = true;
+  if (state.aim && state.mode === "aim") beginFlight(state.aim.vx, state.aim.vy);
+  else {
+    state.aim = null;
+    state.preview = null;
+  }
+}
+
+function saveRun() {
+  if (state.mode !== "done" || !state.result || state.saved) return;
+  var t = state.target;
+  var ring = store.rings[t.id];
+  var run = state.result;
+  ring.latest = run;
+  var next = ring.best.slice();
+  var worst = next.length >= 8 ? next[next.length - 1] : null;
+  var qualifies = next.length < 8 || rankScore(run, t) > rankScore(worst, t);
+  if (qualifies) {
+    next.push(run);
+    next.sort(function (a, b) { return rankScore(b, t) - rankScore(a, t); });
+    ring.best = next.slice(0, 8);
+  }
+  var ok = saveStore();
+  var note = document.getElementById("save-note");
+  if (!ok) {
+    note.textContent = "Couldn’t save on this device.";
+    return;
+  }
+  state.saved = true;
+  if (qualifies && ring.best[0] && ring.best[0].id === run.id) note.textContent = "Saved. Best on this iPad for " + t.name + ".";
+  else if (qualifies) note.textContent = "Saved on this iPad.";
+  else note.textContent = "Saved, but your top 8 for this ring are ahead of it.";
+  tone(520, 0.07, "sine", 0.04);
+  renderBoard();
+}
+
+function clearBoard() {
+  var btn = document.getElementById("btn-clear");
+  if (!clearArmed) {
+    clearArmed = true;
+    btn.textContent = "Tap again to clear";
+    clearTimeout(clearTimer);
+    clearTimer = setTimeout(function () {
+      clearArmed = false;
+      btn.textContent = "Clear";
+    }, 2800);
+    return;
+  }
+  clearArmed = false;
+  clearTimeout(clearTimer);
+  btn.textContent = "Clear";
+  store.rings[state.target.id] = emptyRing();
+  saveStore();
+  renderBoard();
+  document.getElementById("save-note").textContent = "Cleared " + state.target.name + " on this iPad.";
+}
+
+function unlockAudio() {
+  if (!state.sound) return;
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!audioCtx) audioCtx = new AC();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch (err) { /* ignore */ }
+}
+
+function tone(freq, dur, type, gain) {
+  if (!state.sound || !audioCtx) return;
+  var osc = audioCtx.createOscillator();
+  var amp = audioCtx.createGain();
+  osc.type = type || "sine";
+  osc.frequency.value = freq;
+  amp.gain.setValueAtTime(gain, audioCtx.currentTime);
+  amp.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  osc.connect(amp);
+  amp.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + dur);
+}
+
+function chord(freqs, dur, gain) {
+  freqs.forEach(function (f, i) {
+    setTimeout(function () { tone(f, dur, "sine", gain); }, i * 90);
+  });
+}
+
+function frame(now) {
+  try {
+    if (!frame.last) frame.last = now;
+    var wall = Math.min(0.05, (now - frame.last) / 1000);
+    frame.last = now;
+    if (state.mode === "flight" && !state.paused) {
+      var left = wall * state.rate;
+      var guard = 0;
+      while (left > 1e-4 && state.mode === "flight" && guard < 80) {
+        var h = Math.min(SIM_DT, left);
+        stepSim(h);
+        left -= h;
+        guard++;
+      }
+    }
+    draw();
+    syncHud();
+  } catch (err) {
+    console.error(err);
+  }
+  requestAnimationFrame(frame);
+}
+
+function selfCheck() {
+  var errors = [];
+  var station = targets.station;
+  if (Math.abs(station.vEsc - 2000) > 1) errors.push("escape " + station.vEsc);
+  if (Math.abs(station.g - 1) > 1e-9) errors.push("g " + station.g);
+  if (Math.abs(SURFACE_G - 4) > 1e-9) errors.push("surface g");
+  var el = elementsOf(station.r, 0, 0, station.vCirc);
+  if (el.e > 1e-8) errors.push("e " + el.e);
+  if (Math.abs(el.period - station.period) > 1) errors.push("period");
+  var lo = horizontalElements(station.r, station.vLo);
+  var hi = horizontalElements(station.r, station.vHi);
+  if (Math.abs(lo.peri - station.rInner) > 3000) errors.push("vLo peri " + lo.peri);
+  if (Math.abs(hi.apo - station.rOuter) > 3000) errors.push("vHi apo " + hi.apo);
+  var s = { x: station.r, y: 0, vx: 0, vy: station.vCirc };
+  var wind = 0;
+  var prev = 0;
+  var n = Math.round(station.period);
+  var k;
+  for (k = 0; k < n; k++) {
+    rk4(s, 1);
+    var ang = Math.atan2(s.y, s.x);
+    var d = ang - prev;
+    if (d > Math.PI) d -= 2 * Math.PI;
+    if (d < -Math.PI) d += 2 * Math.PI;
+    wind += d;
+    prev = ang;
+  }
+  var rErr = Math.abs(Math.hypot(s.x, s.y) - station.r);
+  if (rErr > 50) errors.push("radius drift " + rErr);
+  if (Math.abs(Math.abs(wind) - Math.PI * 2) > 0.02) errors.push("wind " + wind);
+  var fall = predict(0, 0, station);
+  if (fall.kind !== "ground") errors.push("drop " + fall.kind);
+  var esc = predict(0, station.vEsc * 1.05, station);
+  if (esc.kind !== "escape") errors.push("boost " + esc.kind);
+  var held = predict(0, station.vCirc, station);
+  if (held.kind !== "held") errors.push("circ " + held.kind + " " + held.minAlt + " " + held.maxAlt);
+  var earth = earthCompare();
+  if (Math.abs(earth.v / 1000 - 7.67) > 0.02) errors.push("earth v");
+  if (Math.abs(earth.period / 60 - 92.4) > 0.2) errors.push("earth p");
+  return errors;
+}
+
+document.getElementById("btn-drop").addEventListener("click", function () {
+  if (state.mode !== "aim") return;
+  beginFlight(0, 0);
+});
+document.getElementById("btn-pause").addEventListener("click", function () {
+  if (state.mode !== "flight") return;
+  state.paused = !state.paused;
+});
+document.getElementById("btn-end").addEventListener("click", function () {
+  if (state.mode !== "flight") return;
+  finish("ended");
+});
+document.getElementById("btn-again").addEventListener("click", function () {
+  parkOnRail();
+  renderTargets();
+});
+document.getElementById("btn-save").addEventListener("click", function () {
+  unlockAudio();
+  saveRun();
+});
+document.getElementById("btn-clear").addEventListener("click", clearBoard);
+document.getElementById("btn-sound").addEventListener("click", function () {
+  state.sound = !state.sound;
+  store.sound = state.sound;
+  saveStore();
+  if (state.sound) unlockAudio();
+});
+document.querySelectorAll(".rate").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    state.rate = Number(btn.getAttribute("data-rate"));
+    store.rate = state.rate;
+    saveStore();
+  });
+});
+
+canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
+canvas.addEventListener("pointermove", onPointerMove, { passive: false });
+canvas.addEventListener("pointerup", onPointerUp);
+canvas.addEventListener("pointercancel", onPointerUp);
+canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+window.addEventListener("keydown", function (e) {
+  if (e.key === " " && state.mode === "flight") {
+    e.preventDefault();
+    state.paused = !state.paused;
+  }
+});
+
+window.addEventListener("resize", resize);
+if (window.ResizeObserver) {
+  new ResizeObserver(resize).observe(stageEl);
+}
+
+parkOnRail();
+renderTargets();
+renderCopy();
+renderBoard();
+resize();
+requestAnimationFrame(frame);
+
+window.__game = {
+  state: state,
+  targets: targets,
+  elementsOf: elementsOf,
+  predict: predict,
+  selfCheck: selfCheck,
+  beginFlight: beginFlight,
+  parkOnRail: parkOnRail,
+  setTarget: function (id) {
+    state.target = targets[id];
+    store.targetId = id;
+    parkOnRail();
+    renderTargets();
+    renderCopy();
+    renderBoard();
+  },
+  setRate: function (n) { state.rate = n; },
+  saveRun: saveRun,
+  getStore: function () { return JSON.parse(JSON.stringify(store)); }
+};
+</script>
+</body>
+</html>
